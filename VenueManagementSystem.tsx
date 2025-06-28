@@ -101,10 +101,47 @@ const VenueManagementSystem = () => {
     }
   ]);
 
+  // Reservations State - now mutable
+  const [reservations, setReservations] = useState([
+    {
+      id: 1,
+      reservationNumber: 'RES-001',
+      guestName: 'Sarah Johnson',
+      contact: '+1-555-0123',
+      tableIds: [1],
+      guestCount: 4,
+      status: 'booked',
+      prepayment: 100,
+      spend: 0,
+      bottles: 0,
+      staff: 'John',
+      notes: 'Birthday celebration',
+      eventId: 1,
+      createdBy: 'admin'
+    },
+    {
+      id: 2,
+      reservationNumber: 'RES-002',
+      guestName: 'Mike Chen',
+      contact: '+1-555-0124',
+      tableIds: [3],
+      guestCount: 6,
+      status: 'checked-in',
+      prepayment: 0,
+      spend: 320,
+      bottles: 2,
+      staff: 'Anna',
+      notes: '',
+      eventId: 1,
+      createdBy: 'admin'
+    }
+  ]);
+
   // Form States for Modals
   const [showEventForm, setShowEventForm] = useState(false);
   const [showTableForm, setShowTableForm] = useState(false);
   const [showGuestForm, setShowGuestForm] = useState(false);
+  const [showReservationForm, setShowReservationForm] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   
   const [checkInSearch, setCheckInSearch] = useState('');
@@ -204,6 +241,32 @@ const VenueManagementSystem = () => {
     ));
   };
 
+  // CRUD Functions for Reservations
+  const addReservation = (data) => {
+    const newId = reservations.length ? Math.max(...reservations.map(r => r.id)) + 1 : 1;
+    const newReservation = {
+      ...data,
+      id: newId,
+      reservationNumber: `RES-${String(newId).padStart(3, '0')}`,
+    };
+    setReservations([...reservations, newReservation]);
+    setShowReservationForm(false);
+  };
+
+  const updateReservation = (id, data) => {
+    setReservations(reservations.map(r => r.id === id ? { ...r, ...data } : r));
+    setEditingItem(null);
+    setShowReservationForm(false);
+  };
+
+  const cancelReservation = (id) => {
+    setReservations(reservations.map(r => r.id === id ? { ...r, status: 'cancelled' } : r));
+  };
+
+  const deleteReservation = (id) => {
+    setReservations(reservations.filter(r => r.id !== id));
+  };
+
   // QR Code Scanner Simulation
   const simulateQRScan = () => {
     const randomGuest = guests[Math.floor(Math.random() * guests.length)];
@@ -238,6 +301,16 @@ const VenueManagementSystem = () => {
       case 'regular': return 'bg-blue-900 text-blue-300 border border-blue-700';
       case 'promoter guest': return 'bg-orange-900 text-orange-300 border border-orange-700';
       case 'high roller': return 'bg-yellow-900 text-yellow-300 border border-yellow-700';
+      default: return 'bg-gray-800 text-gray-300 border border-gray-600';
+    }
+  };
+
+  const getReservationStatusColor = (status) => {
+    switch(status) {
+      case 'booked': return 'bg-yellow-900 text-yellow-300 border border-yellow-700';
+      case 'checked-in': return 'bg-purple-900 text-purple-300 border border-purple-700';
+      case 'cancelled': return 'bg-red-900 text-red-300 border border-red-700';
+      case 'no-show': return 'bg-red-900 text-red-300 border border-red-700';
       default: return 'bg-gray-800 text-gray-300 border border-gray-600';
     }
   };
@@ -484,6 +557,115 @@ const VenueManagementSystem = () => {
     );
   };
 
+  const ReservationForm = ({ reservation, onSubmit, onCancel }) => {
+    const [formData, setFormData] = useState(reservation || {
+      guestName: '',
+      contact: '',
+      tableIds: [],
+      guestCount: 1,
+      status: 'booked',
+      prepayment: 0,
+      spend: 0,
+      bottles: 0,
+      notes: '',
+      staff: '',
+      eventId: selectedEvent.id,
+      createdBy: 'admin'
+    });
+
+    const toggleTable = (id) => {
+      const newIds = formData.tableIds.includes(id)
+        ? formData.tableIds.filter(t => t !== id)
+        : [...formData.tableIds, id];
+      setFormData({ ...formData, tableIds: newIds });
+    };
+
+    const handleSubmit = (e) => {
+      e.preventDefault();
+      onSubmit(formData);
+    };
+
+    return (
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <input
+          type="text"
+          placeholder="Guest Name"
+          value={formData.guestName}
+          onChange={(e) => setFormData({ ...formData, guestName: e.target.value })}
+          className="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400"
+          required
+        />
+        <input
+          type="text"
+          placeholder="Contact"
+          value={formData.contact}
+          onChange={(e) => setFormData({ ...formData, contact: e.target.value })}
+          className="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400"
+          required
+        />
+        <div>
+          <p className="text-sm text-gray-300 mb-1">Assign Tables</p>
+          <div className="flex flex-wrap gap-2">
+            {tables.map(t => (
+              <button
+                type="button"
+                key={t.id}
+                onClick={() => toggleTable(t.id)}
+                className={`px-2 py-1 text-xs rounded ${formData.tableIds.includes(t.id) ? 'bg-purple-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}
+              >
+                {t.name}
+              </button>
+            ))}
+          </div>
+        </div>
+        <input
+          type="number"
+          placeholder="Guest Count"
+          value={formData.guestCount}
+          onChange={(e) => setFormData({ ...formData, guestCount: parseInt(e.target.value) })}
+          className="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400"
+          required
+        />
+        <input
+          type="number"
+          placeholder="Prepayment"
+          value={formData.prepayment}
+          onChange={(e) => setFormData({ ...formData, prepayment: parseFloat(e.target.value) })}
+          className="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400"
+        />
+        <input
+          type="text"
+          placeholder="Assigned Staff"
+          value={formData.staff}
+          onChange={(e) => setFormData({ ...formData, staff: e.target.value })}
+          className="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400"
+        />
+        <textarea
+          placeholder="Notes"
+          value={formData.notes}
+          onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+          className="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400"
+          rows={3}
+        />
+        <div className="flex space-x-2">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="flex-1 bg-gray-800 border border-gray-600 text-gray-200 px-4 py-2 rounded-lg hover:bg-gray-700"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="flex-1 bg-gradient-to-r from-yellow-500 to-yellow-400 text-black px-4 py-2 rounded-lg hover:from-yellow-600 hover:to-yellow-500 font-semibold"
+          >
+            {reservation ? 'Update' : 'Add'} Reservation
+          </button>
+        </div>
+      </form>
+    );
+  };
+
   const TabButton = ({ id, children, icon: Icon }) => (
     <button
       onClick={() => setActiveTab(id)}
@@ -525,6 +707,7 @@ const VenueManagementSystem = () => {
         <div className="flex space-x-2 mb-6 overflow-x-auto">
           <TabButton id="dashboard" icon={Calendar}>Dashboard</TabButton>
           <TabButton id="tables" icon={MapPin}>Tables</TabButton>
+          <TabButton id="reservations" icon={Clock}>Reservations</TabButton>
           <TabButton id="events" icon={Calendar}>Events</TabButton>
           <TabButton id="guests" icon={Users}>Guests</TabButton>
           <TabButton id="checkin" icon={QrCode}>Check-In</TabButton>
@@ -636,8 +819,10 @@ const VenueManagementSystem = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {tables.map(table => (
-                <div key={table.id} className="bg-gradient-to-br from-gray-900 to-black border border-purple-800 p-6 rounded-lg shadow-lg">
+              {tables.map(table => {
+                const tableRes = reservations.find(r => r.tableIds.includes(table.id) && r.eventId === selectedEvent.id && r.status !== 'cancelled');
+                return (
+                <div key={table.id} className="relative group bg-gradient-to-br from-gray-900 to-black border border-purple-800 p-6 rounded-lg shadow-lg">
                   <div className="flex justify-between items-start mb-4">
                     <div>
                       <h3 className="font-semibold text-lg text-white">{table.name}</h3>
@@ -647,17 +832,25 @@ const VenueManagementSystem = () => {
                       {table.status}
                     </span>
                   </div>
-                  
-                  {table.guest && (
+
+                  {tableRes && (
                     <div className="mb-4">
-                      <p className="font-medium text-white">{table.guest}</p>
+                      <p className="font-medium text-white">{tableRes.guestName}</p>
                       <p className="text-sm text-gray-300">Min Spend: <span className="text-yellow-400">${table.minSpend}</span></p>
                       <p className="text-sm text-gray-300">Current: <span className="text-purple-400">${table.currentSpend}</span></p>
                     </div>
                   )}
 
+                  {tableRes && (
+                    <div className="absolute inset-0 hidden group-hover:flex flex-col justify-center items-center bg-black bg-opacity-80 rounded-lg text-sm text-gray-200 space-y-1">
+                      <p>{tableRes.guestName}</p>
+                      <p>{tableRes.reservationNumber}</p>
+                      <span className={`px-2 py-1 text-xs rounded ${getReservationStatusColor(tableRes.status)}`}>{tableRes.status}</span>
+                    </div>
+                  )}
+
                   <div className="flex space-x-2">
-                    <button 
+                    <button
                       onClick={() => {
                         setEditingItem(table);
                         setShowTableForm(true);
@@ -668,7 +861,7 @@ const VenueManagementSystem = () => {
                       Edit
                     </button>
                     {table.status === 'booked' && (
-                      <button 
+                      <button
                         onClick={() => checkInTable(table.id)}
                         className="flex-1 bg-gradient-to-r from-purple-600 to-purple-700 text-white px-3 py-2 rounded text-sm hover:from-purple-700 hover:to-purple-800"
                       >
@@ -676,6 +869,76 @@ const VenueManagementSystem = () => {
                         Check In
                       </button>
                     )}
+                  </div>
+                </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Reservations Management */}
+        {activeTab === 'reservations' && (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-semibold text-white">Reservations</h2>
+              <button
+                onClick={() => {
+                  setEditingItem(null);
+                  setShowReservationForm(true);
+                }}
+                className="bg-gradient-to-r from-yellow-500 to-yellow-400 text-black px-4 py-2 rounded-lg flex items-center space-x-2 hover:from-yellow-600 hover:to-yellow-500 font-semibold"
+              >
+                <Plus size={18} />
+                <span>Add Reservation</span>
+              </button>
+            </div>
+            <input
+              type="text"
+              placeholder="Search reservations"
+              onChange={(e) => setCheckInSearch(e.target.value)}
+              value={checkInSearch}
+              className="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400"
+            />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {reservations.filter(r => r.eventId === selectedEvent.id && (
+                r.guestName.toLowerCase().includes(checkInSearch.toLowerCase()) ||
+                r.reservationNumber.toLowerCase().includes(checkInSearch.toLowerCase())
+              )).map(res => (
+                <div key={res.id} className="bg-gradient-to-br from-gray-900 to-black border border-purple-800 p-6 rounded-lg shadow-lg">
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <h3 className="font-semibold text-lg text-white">{res.guestName}</h3>
+                      <p className="text-sm text-gray-300">{res.reservationNumber}</p>
+                    </div>
+                    <span className={`px-2 py-1 text-xs rounded ${getReservationStatusColor(res.status)}`}>{res.status}</span>
+                  </div>
+                  <p className="text-sm text-gray-300 mb-1">Tables: {res.tableIds.map(id => tables.find(t => t.id === id)?.name).join(', ')}</p>
+                  <p className="text-sm text-gray-300 mb-1">Guests: {res.guestCount}</p>
+                  <p className="text-sm text-gray-300 mb-1">Staff: {res.staff || '-'}</p>
+                  <p className="text-sm text-gray-300 mb-2">Spend: ${res.spend}</p>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => {
+                        setEditingItem(res);
+                        setShowReservationForm(true);
+                      }}
+                      className="flex-1 bg-gray-800 border border-gray-600 text-gray-200 px-3 py-2 rounded text-sm hover:bg-gray-700"
+                    >
+                      <Edit3 size={14} className="inline mr-1" />Edit
+                    </button>
+                    <button
+                      onClick={() => cancelReservation(res.id)}
+                      className="flex-1 bg-gray-800 border border-gray-600 text-gray-200 px-3 py-2 rounded text-sm hover:bg-gray-700"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => deleteReservation(res.id)}
+                      className="flex-1 bg-red-700 text-white px-3 py-2 rounded text-sm hover:bg-red-800"
+                    >
+                      Delete
+                    </button>
                   </div>
                 </div>
               ))}
@@ -878,6 +1141,30 @@ const VenueManagementSystem = () => {
             }}
             onCancel={() => {
               setShowEventForm(false);
+              setEditingItem(null);
+            }}
+          />
+        </Modal>
+
+        <Modal
+          isOpen={showReservationForm}
+          onClose={() => {
+            setShowReservationForm(false);
+            setEditingItem(null);
+          }}
+          title={editingItem ? 'Edit Reservation' : 'Add Reservation'}
+        >
+          <ReservationForm
+            reservation={editingItem}
+            onSubmit={(data) => {
+              if (editingItem) {
+                updateReservation(editingItem.id, data);
+              } else {
+                addReservation(data);
+              }
+            }}
+            onCancel={() => {
+              setShowReservationForm(false);
               setEditingItem(null);
             }}
           />
