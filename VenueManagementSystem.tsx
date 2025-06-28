@@ -623,8 +623,11 @@ const VenueManagementSystem = () => {
           <div className="space-y-6">
             <div className="flex justify-between items-center">
               <h2 className="text-xl font-semibold text-white">Table Management</h2>
-              <button 
-                onClick={() => setShowTableForm(true)}
+              <button
+                onClick={() => {
+                  setEditingItem(null);
+                  setShowTableForm(true);
+                }}
                 className="bg-gradient-to-r from-yellow-500 to-yellow-400 text-black px-4 py-2 rounded-lg flex items-center space-x-2 hover:from-yellow-600 hover:to-yellow-500 font-semibold"
               >
                 <Plus size={18} />
@@ -680,12 +683,253 @@ const VenueManagementSystem = () => {
           </div>
         )}
 
-                {/* Events */}
-                {activeTab === 'events' && (
-                  <div>
-                    {/* Events tab content goes here */}
+        {/* Events Management */}
+        {activeTab === 'events' && (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-semibold text-white">Event Management</h2>
+              <button
+                onClick={() => {
+                  setEditingItem(null);
+                  setShowEventForm(true);
+                }}
+                className="bg-gradient-to-r from-yellow-500 to-yellow-400 text-black px-4 py-2 rounded-lg flex items-center space-x-2 hover:from-yellow-600 hover:to-yellow-500 font-semibold"
+              >
+                <Plus size={18} />
+                <span>Add Event</span>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {events.map(event => (
+                <div key={event.id} className="bg-gradient-to-br from-gray-900 to-black border border-purple-800 p-6 rounded-lg shadow-lg">
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <h3 className="font-semibold text-lg text-white">{event.name}</h3>
+                      <p className="text-sm text-gray-300">{event.date}</p>
+                      <p className="text-sm text-gray-300">Capacity: {event.capacity}</p>
+                    </div>
+                    <button
+                      onClick={() => setSelectedEvent(event)}
+                      className="bg-gray-800 border border-gray-600 text-gray-200 px-2 py-1 rounded text-sm hover:bg-gray-700"
+                    >
+                      <Eye size={14} className="inline mr-1" />
+                      View
+                    </button>
                   </div>
-                )}
+                  <div className="flex justify-between items-center mb-4 text-sm text-gray-300">
+                    <span>Checked In: {event.checkedIn}</span>
+                    <span>Revenue: ${event.revenue}</span>
+                  </div>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => {
+                        setEditingItem(event);
+                        setShowEventForm(true);
+                      }}
+                      className="flex-1 bg-gray-800 border border-gray-600 text-gray-200 px-3 py-2 rounded text-sm hover:bg-gray-700 hover:border-gray-500"
+                    >
+                      <Edit3 size={14} className="inline mr-1" />
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => setSelectedEvent(event)}
+                      className="flex-1 bg-gradient-to-r from-purple-600 to-purple-700 text-white px-3 py-2 rounded text-sm hover:from-purple-700 hover:to-purple-800"
+                    >
+                      Set Current
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Guests Management */}
+        {activeTab === 'guests' && (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-semibold text-white">Guest Management</h2>
+              <button
+                onClick={() => {
+                  setEditingItem(null);
+                  setShowGuestForm(true);
+                }}
+                className="bg-gradient-to-r from-yellow-500 to-yellow-400 text-black px-4 py-2 rounded-lg flex items-center space-x-2 hover:from-yellow-600 hover:to-yellow-500 font-semibold"
+              >
+                <Plus size={18} />
+                <span>Add Guest</span>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {guests.map(guest => (
+                <div key={guest.id} className="bg-gradient-to-br from-gray-900 to-black border border-purple-800 p-6 rounded-lg shadow-lg">
+                  <div className="mb-2">
+                    <h3 className="font-semibold text-lg text-white">{guest.name}</h3>
+                    <p className="text-sm text-gray-300">{guest.email}</p>
+                    <p className="text-sm text-gray-300">{guest.phone}</p>
+                  </div>
+                  <div className="flex flex-wrap gap-1 mb-4">
+                    {guest.tags.map(tag => (
+                      <span key={tag} className={`px-2 py-1 text-xs rounded ${getTagColor(tag)}`}>{tag}</span>
+                    ))}
+                  </div>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => {
+                        setEditingItem(guest);
+                        setShowGuestForm(true);
+                      }}
+                      className="flex-1 bg-gray-800 border border-gray-600 text-gray-200 px-3 py-2 rounded text-sm hover:bg-gray-700 hover:border-gray-500"
+                    >
+                      <Edit3 size={14} className="inline mr-1" />
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleCheckIn(guest.id)}
+                      disabled={guest.checkedIn}
+                      className={`flex-1 px-3 py-2 rounded text-sm ${
+                        guest.checkedIn
+                          ? 'bg-gray-800 border border-gray-600 text-gray-400 cursor-not-allowed'
+                          : 'bg-gradient-to-r from-purple-600 to-purple-700 text-white hover:from-purple-700 hover:to-purple-800'
+                      }`}
+                    >
+                      {guest.checkedIn ? 'Checked In' : 'Check In'}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Check-In */}
+        {activeTab === 'checkin' && (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-semibold text-white">Guest Check-In</h2>
+              <button
+                onClick={simulateQRScan}
+                className="bg-gradient-to-r from-yellow-500 to-yellow-400 text-black px-4 py-2 rounded-lg flex items-center space-x-2 hover:from-yellow-600 hover:to-yellow-500 font-semibold"
+              >
+                <QrCode size={18} />
+                <span>Simulate QR Scan</span>
+              </button>
+            </div>
+
+            <input
+              type="text"
+              value={checkInSearch}
+              onChange={(e) => setCheckInSearch(e.target.value)}
+              placeholder="Search guests"
+              className="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400"
+            />
+
+            <div className="space-y-3">
+              {filteredGuests.map(guest => (
+                <div key={guest.id} className="flex items-center justify-between p-3 bg-gray-800 border border-gray-700 rounded">
+                  <div>
+                    <p className="font-medium text-white">{guest.name}</p>
+                    <p className="text-sm text-gray-300">{guest.email}</p>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    {guest.checkedIn ? (
+                      <span className="text-green-400 text-sm">{guest.checkInTime}</span>
+                    ) : (
+                      <button
+                        onClick={() => handleCheckIn(guest.id)}
+                        className="bg-gradient-to-r from-purple-600 to-purple-700 text-white px-3 py-1 rounded text-sm hover:from-purple-700 hover:to-purple-800"
+                      >
+                        Check In
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Payments */}
+        {activeTab === 'payments' && (
+          <div className="space-y-4 text-gray-300">
+            <h2 className="text-xl font-semibold text-white">Payments</h2>
+            <p>Payments functionality coming soon.</p>
+          </div>
+        )}
+
+        <Modal
+          isOpen={showEventForm}
+          onClose={() => {
+            setShowEventForm(false);
+            setEditingItem(null);
+          }}
+          title={editingItem ? 'Edit Event' : 'Create Event'}
+        >
+          <EventForm
+            event={editingItem}
+            onSubmit={(data) => {
+              if (editingItem) {
+                updateEvent(editingItem.id, data);
+              } else {
+                addEvent(data);
+              }
+            }}
+            onCancel={() => {
+              setShowEventForm(false);
+              setEditingItem(null);
+            }}
+          />
+        </Modal>
+
+        <Modal
+          isOpen={showTableForm}
+          onClose={() => {
+            setShowTableForm(false);
+            setEditingItem(null);
+          }}
+          title={editingItem ? 'Edit Table' : 'Add Table'}
+        >
+          <TableForm
+            table={editingItem}
+            onSubmit={(data) => {
+              if (editingItem) {
+                updateTable(editingItem.id, data);
+              } else {
+                addTable(data);
+              }
+            }}
+            onCancel={() => {
+              setShowTableForm(false);
+              setEditingItem(null);
+            }}
+          />
+        </Modal>
+
+        <Modal
+          isOpen={showGuestForm}
+          onClose={() => {
+            setShowGuestForm(false);
+            setEditingItem(null);
+          }}
+          title={editingItem ? 'Edit Guest' : 'Add Guest'}
+        >
+          <GuestForm
+            guest={editingItem}
+            onSubmit={(data) => {
+              if (editingItem) {
+                updateGuest(editingItem.id, data);
+              } else {
+                addGuest(data);
+              }
+            }}
+            onCancel={() => {
+              setShowGuestForm(false);
+              setEditingItem(null);
+            }}
+          />
+        </Modal>
               </div>
             </div>
           );
